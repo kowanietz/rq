@@ -1,3 +1,5 @@
+# $${\color{red}r}ust \space re{\color{red}q}uests$$
+
 # Installation
 
 `cargo install --path .`
