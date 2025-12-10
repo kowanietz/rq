@@ -91,7 +91,7 @@ impl StyledLine {
 
             stdout.set_color(&color_spec).expect("Failed to set color");
 
-            write!(&mut stdout, "{}", segment.text).expect("Failed to write to stdout");
+            write!(&mut stdout, "{}", segment.text).expect("Failed to set color");
         }
 
         stdout // reest color and go to next line

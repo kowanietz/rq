@@ -8,14 +8,18 @@
 # Usage (`rq --help`)
 
 ```
-HTTP request CLI tool
-
 Usage: rq [OPTIONS] <URL>
 
 Arguments:
   <URL>  URL to request
 
 Options:
+  -g, --get                GET request
+  -p, --post               POST request
+  -u, --put                PUT request
+  -d, --delete             DELETE request
+  -x, --patch              PATCH request
+  -b, --body <BODY>        Request body (JSON string or key=value pairs)
   -v, --verbose <VERBOSE>  Verbose mode [default: 0]
   -h, --help               Print help
   -V, --version            Print version
