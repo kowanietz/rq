@@ -58,14 +58,14 @@ async fn fetch_url(
 async fn main() {
     let args = Args::parse();
 
-    let url: String = if !args.url.starts_with("https://") {
-        format!("https://{}", args.url)
+    let url: String = if !args.get_url().starts_with("https://") {
+        format!("https://{}", args.get_url())
     } else {
-        args.url.clone()
+        args.get_url().to_string()
     };
 
     let method = args.method();
-    let body = args.body.clone();
+    let body = args.get_body();
 
     let res = fetch_url(&url, method, body)
         .await
@@ -77,7 +77,7 @@ async fn main() {
         Err(_) => pretty_body = res.body,
     }
 
-    if args.verbose == 1 {
+    if args.get_verbose() == 1 {
         StyledLine::new()
             .add(StyledSegment::new(method).color(Color::Cyan).bold().space())
             .add(StyledSegment::new(&url).color(Color::White))
