@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::io::{self, Read};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -57,6 +58,10 @@ pub enum Commands {
         /// URL to request
         url: String,
 
+        /// Request body data (JSON string, key=value pairs, or @file)
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        body_data: Vec<String>,
+
         /// Request body (JSON string or key=value pairs)
         #[arg(short = 'b', long = "body")]
         body: Option<String>,
@@ -69,6 +74,10 @@ pub enum Commands {
     Put {
         /// URL to request
         url: String,
+
+        /// Request body data (JSON string, key=value pairs, or @file)
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        body_data: Vec<String>,
 
         /// Request body (JSON string or key=value pairs)
         #[arg(short = 'b', long = "body")]
@@ -91,6 +100,10 @@ pub enum Commands {
     Patch {
         /// URL to request
         url: String,
+
+        /// Request body data (JSON string, key=value pairs, or @file)
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        body_data: Vec<String>,
 
         /// Request body (JSON string or key=value pairs)
         #[arg(short = 'b', long = "body")]
@@ -142,17 +155,73 @@ impl Args {
     }
 
     /// Get the body from either subcommand or root argument
-    pub fn get_body(&self) -> Option<String> {
+    pub fn get_body(&self) -> Result<Option<String>, String> {
         if let Some(ref cmd) = self.command {
             match cmd {
-                Commands::Post { body, .. } => body.clone(),
-                Commands::Put { body, .. } => body.clone(),
-                Commands::Patch { body, .. } => body.clone(),
-                _ => None,
+                Commands::Post {
+                    body, body_data, ..
+                } => Self::parse_body(body.clone(), body_data),
+                Commands::Put {
+                    body, body_data, ..
+                } => Self::parse_body(body.clone(), body_data),
+                Commands::Patch {
+                    body, body_data, ..
+                } => Self::parse_body(body.clone(), body_data),
+                _ => Ok(None),
             }
         } else {
-            self.body.clone()
+            Ok(self.body.clone())
         }
+    }
+
+    /// Parse body from either -b flag or positional args
+    fn parse_body(
+        flag_body: Option<String>,
+        body_data: &[String],
+    ) -> Result<Option<String>, String> {
+        if let Some(body) = flag_body {
+            return Ok(Some(body));
+        }
+
+        if body_data.is_empty() {
+            if !atty::is(atty::Stream::Stdin) {
+                let mut buffer = String::new();
+                io::stdin()
+                    .read_to_string(&mut buffer)
+                    .map_err(|e| format!("Failed to read from stdin: {}", e))?;
+                if !buffer.is_empty() {
+                    return Ok(Some(buffer));
+                }
+            }
+            return Ok(None);
+        }
+
+        if body_data.len() == 1 {
+            let arg = &body_data[0];
+
+            if let Some(file_path) = arg.strip_prefix('@') {
+                return std::fs::read_to_string(file_path)
+                    .map(Some)
+                    .map_err(|e| format!("Failed to read file '{}': {}", file_path, e));
+            }
+
+            return Ok(Some(arg.clone()));
+        }
+
+        let mut json_obj = serde_json::Map::new();
+        for arg in body_data {
+            if let Some((key, value)) = arg.split_once('=') {
+                let json_value = match serde_json::from_str(value) {
+                    Ok(v) => v,
+                    Err(_) => serde_json::Value::String(value.to_string()),
+                };
+                json_obj.insert(key.to_string(), json_value);
+            } else {
+                return Err(format!("Invalid key=value pair: '{}'", arg));
+            }
+        }
+
+        Ok(Some(serde_json::to_string(&json_obj).unwrap()))
     }
 
     /// Get verbose level from either subcommand or root argument

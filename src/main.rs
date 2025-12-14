@@ -65,7 +65,10 @@ async fn main() {
     };
 
     let method = args.method();
-    let body = args.get_body();
+    let body = args.get_body().unwrap_or_else(|e| {
+        eprintln!("Error parsing body: {}", e);
+        std::process::exit(1);
+    });
 
     let res = fetch_url(&url, method, body)
         .await

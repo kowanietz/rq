@@ -9,3 +9,4 @@ reqwest = "0.12.24"
 tokio = { version = "1.48.0", features = ["rt", "rt-multi-thread", "macros"] }
 serde_json = "1.0.145"
 termcolor = "1.4.1"
+atty = "0.2.14"

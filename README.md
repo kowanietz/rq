@@ -55,24 +55,43 @@ rq postman-echo.com/get
 
 ## POST request
 
-Using subcommand syntax (recommended):
+Using subcommand syntax with positional body (recommended):
 ```bash
-rq post postman-echo.com/post -b '{"message":"rq"}'
+rq post postman-echo.com/post '{"message":"rq"}'
 ```
 
-Using flag syntax:
+Using key=value pairs (auto-converts to JSON):
 ```bash
+rq post postman-echo.com/post name=John age=30 active=true
+# Sends: {"name":"John","age":30,"active":true}
+```
+
+Reading body from file:
+```bash
+rq post postman-echo.com/post @body.json
+```
+
+Reading from stdin:
+```bash
+echo '{"message":"rq"}' | rq post postman-echo.com/post
+cat request.json | rq post postman-echo.com/post
+```
+
+Using -b flag (backward compatible):
+```bash
+rq post postman-echo.com/post -b '{"message":"rq"}'
 rq -p postman-echo.com/post -b '{"message":"rq"}'
 ```
 
 ## Other HTTP methods
 
-All methods support both syntaxes:
+All methods support both syntaxes and body input methods:
 ```bash
-# Subcommand style
-rq put postman-echo.com/put -b '{"data":"value"}'
+# Subcommand style with positional body
+rq put postman-echo.com/put '{"data":"value"}'
+rq put postman-echo.com/put data=value status=updated
 rq delete postman-echo.com/delete
-rq patch postman-echo.com/patch -b '{"field":"update"}'
+rq patch postman-echo.com/patch '{"field":"update"}'
 
 # Flag style
 rq -u postman-echo.com/put -b '{"data":"value"}'
