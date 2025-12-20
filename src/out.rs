@@ -1,3 +1,4 @@
+use crate::http::Response;
 use std::io::Write;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
@@ -99,4 +100,57 @@ impl StyledLine {
             .expect("Failed to reset color");
         writeln!(&mut stdout).expect("Failed to write to stdout");
     }
+}
+
+/// Display verbose information
+pub fn display_request(method: &str, url: &str) {
+    StyledLine::new()
+        .add(StyledSegment::new(method).color(Color::Cyan).bold().space())
+        .add(StyledSegment::new(url).color(Color::White))
+        .print();
+}
+
+/// Display HTTP status code amd message
+pub fn display_status(status: u16, status_message: &str) {
+    StyledLine::new()
+        .add(StyledSegment::new("Status").color(Color::Green).space())
+        .add(
+            StyledSegment::new(status.to_string())
+                .color(Color::Blue)
+                .bold()
+                .space(),
+        )
+        .add(StyledSegment::new(status_message).color(Color::Green))
+        .print();
+}
+
+/// Display Content-Type header
+pub fn display_content_type(response: &Response) {
+    if let Some(content_type) = response.headers.get("Content-Type") {
+        StyledLine::new()
+            .add(
+                StyledSegment::new("Content-Type")
+                    .color(Color::Green)
+                    .space(),
+            )
+            .add(StyledSegment::new(content_type.to_str().unwrap()))
+            .print();
+    }
+}
+
+/// Display the complete response
+pub fn display_response(
+    response: &Response,
+    formatted_body: &str,
+    verbose: bool,
+    method: &str,
+    url: &str,
+) {
+    if verbose {
+        display_request(method, url);
+    }
+
+    display_status(response.status, response.status_message);
+    display_content_type(response);
+    println!("{}", formatted_body);
 }
